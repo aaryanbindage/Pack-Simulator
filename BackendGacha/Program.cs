@@ -58,10 +58,11 @@ public class PulledItem
         {
             List<GachaItem> itemPool = new List<GachaItem>
             {
-                new GachaItem("Excalibur (5-Star)", "Legendary", 0.6),
-                new GachaItem("Dragon Shield (4-Star)", "Epic", 5.4),
-                new GachaItem("Steel Sword (3-Star)", "Rare", 24.0),
-                new GachaItem("Iron Dagger (2-Star)", "Common", 70.0)
+                new GachaItem("Hack Grail", "Legendary", 0.6),
+                new GachaItem("Coin Of Glory", "Epic", 3.4),
+                new GachaItem("Golden Coin", "Awesome(Almost Legendary!)", 2.0),
+                new GachaItem("Relic Coin", "Rare", 24.0),
+                new GachaItem("Milled Coin", "Common", 70.0)
             };
 
             // 3. Roll the 10 items and store them in our data payload
