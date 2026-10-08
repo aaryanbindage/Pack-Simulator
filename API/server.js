@@ -30,7 +30,7 @@ app.post('/api/gacha/results', async (req, res) => {
         // 3. Map incoming data directly into database row shapes
         // We unpack the items list into a flat array of table rows
         const rowsToInsert = payload.Items.map(item => ({
-            session_id: payload.SessionId,
+            session_id: payload.Session,
             rolled_at: payload.Timestamp, // Inherit timestamp from client roll execution
             pull_number: item.PullNumber,
             item_name: item.Name,
