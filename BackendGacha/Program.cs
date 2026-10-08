@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json; 
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
+
 
 namespace GachaSystem
 {
@@ -10,7 +12,7 @@ namespace GachaSystem
     {
         public string Name { get; set; }
         public string Rarity { get; set; }
-        public double Weight { get; set; }
+        public double Prob { get; set; }
 
         public GachaItem(string name, string rarity, double prob)
         {
@@ -22,18 +24,28 @@ namespace GachaSystem
 
    
     public class GachaResultPayload
-    {
-        public string Session { get; set; }
-        public DateTime Timestamp { get; set; }
-        public List<PulledItem> Items { get; set; } = new List<PulledItem>();
-    }
+{
+    [JsonPropertyName("Session")] // Forces the JSON key to be exactly "Session"
+    public string Session { get; set; }
 
-    public class PulledItem
-    {
-        public int PullNumber { get; set; }
-        public string Name { get; set; }
-        public string Rarity { get; set; }
-    }
+    [JsonPropertyName("Timestamp")] // Forces the JSON key to be exactly "Timestamp"
+    public DateTime Timestamp { get; set; }
+
+    [JsonPropertyName("Items")]     // Forces the JSON key to be exactly "Items"
+    public List<PulledItem> Items { get; set; } = new List<PulledItem>();
+}
+
+public class PulledItem
+{
+    [JsonPropertyName("PullNumber")]
+    public int PullNumber { get; set; }
+
+    [JsonPropertyName("Name")]
+    public string Name { get; set; }
+
+    [JsonPropertyName("Rarity")]
+    public string Rarity { get; set; }
+}
 
     class Program
     {
@@ -55,7 +67,7 @@ namespace GachaSystem
             // 3. Roll the 10 items and store them in our data payload
             var payload = new GachaResultPayload
             {
-                SessionId = Guid.NewGuid().ToString(),
+                Session = Guid.NewGuid().ToString(),
                 Timestamp = DateTime.UtcNow
             };
 
@@ -74,7 +86,7 @@ namespace GachaSystem
             }
 
             // 4. Send the results to your endpoint
-            string targetUrl = "https://pack-simulator.onrender.com";    
+            string targetUrl = "https://pack-simulator.onrender.com/api/gacha/results";    
             Console.WriteLine($"\nSending results to {targetUrl}...");
             
             await SendGachaResultsAsync(targetUrl, payload);
@@ -107,7 +119,7 @@ namespace GachaSystem
             double totalBoundary = 0;
             foreach (var item in pool) totalBoundary += item.Prob;
 
-            double roll = _random.NextDouble() * totalWeight;
+            double roll = _random.NextDouble() * totalBoundary;
             double RollingBound = 0;
 
             foreach (var item in pool)
