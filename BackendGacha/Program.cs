@@ -74,7 +74,7 @@ namespace GachaSystem
             }
 
             // 4. Send the results to your endpoint
-            string targetUrl = "https://your-api-endpoint.com";
+            string targetUrl = "https://pack-simulator.onrender.com";    
             Console.WriteLine($"\nSending results to {targetUrl}...");
             
             await SendGachaResultsAsync(targetUrl, payload);
