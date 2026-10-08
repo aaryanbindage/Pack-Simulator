@@ -5,8 +5,8 @@ const app = express();
 app.use(express.json());
 
 // Securely check if variables exist to prevent silent crashes
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.DB_URL;
+const supabaseAnonKey = process.env.DB_PUBLISHABLE;
 
 if (!supabaseUrl || !supabaseAnonKey) {
     console.error("❌ CRITICAL ERROR: SUPABASE_URL or SUPABASE_ANON_KEY environment variables are missing!");
