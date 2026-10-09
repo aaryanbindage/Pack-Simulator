@@ -47,7 +47,7 @@ app.MapPost("/api/gacha/pull", async ([FromBody] UserPullRequest request) =>
 
     for (int i = 1; i <= 10; i++)
     {
-        GachaItem drawnItem = DrawItem(itemPool, random);
+        GachaItem drawnItem = GachaEngine.DrawItem(itemPool, random);
         payload.Items.Add(new PulledItemDto
         {
             PullNumber = i,
