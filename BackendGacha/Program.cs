@@ -41,7 +41,7 @@ app.MapPost("/api/gacha/pull", async ([FromBody] UserPullRequest request) =>
     var payload = new GachaResultPayload
     {
         Username = request.Username,
-        SessionId = Guid.NewGuid().ToString(),
+        Session = Guid.NewGuid().ToString(),
         Timestamp = DateTime.UtcNow
     };
 
