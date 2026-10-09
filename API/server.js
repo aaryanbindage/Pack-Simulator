@@ -4,54 +4,64 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 app.use(express.json());
 
-// Securely check if variables exist to prevent silent crashes
-const supabaseUrl = process.env.DB_URL;
-const supabaseAnonKey = process.env.DB_PUBLISHABLE;
+const supabase = createClient(process.env.DB_URL, process.env.DB_PUBLISHABLE);
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("❌ CRITICAL ERROR: SUPABASE_URL or SUPABASE_ANON_KEY environment variables are missing!");
-    process.exit(1); // Safely tells Render exactly why it's stopping
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// 2. Define the endpoint routing
 app.post('/api/gacha/results', async (req, res) => {
     const payload = req.body;
 
-    // Validate the incoming request format
-    if (!payload || !payload.Items || payload.Items.length === 0) {
-        return res.status(400).json({ error: "Invalid gacha payload data." });
+    // Validate incoming structural data
+    if (!payload || !payload.Items || payload.Items.length === 0 || !payload.Username) {
+        return res.status(400).json({ error: "Invalid gacha payload data. 'Username' is required." });
     }
 
     try {
-        console.log(`\nProcessing Gacha Session: ${payload.SessionId}...`);
+        console.log(`\n[SERVER] Processing 10-pull for user: ${payload.Username}`);
 
-        // 3. Map incoming data directly into database row shapes
-        // We unpack the items list into a flat array of table rows
+        // 1. Get or Create the Account ID for this user
+        let { data: account, error: fetchError } = await supabase
+            .from('accounts')
+            .select('id')
+            .eq('username', payload.Username)
+            .single();
+
+        if (fetchError && fetchError.code === 'PGRST116') { // PGRST116 means "no rows found"
+            // Account doesn't exist, let's automatically create it
+            const { data: newAccount, error: createError } = await supabase
+                .from('accounts')
+                .insert({ username: payload.Username })
+                .select('id')
+                .single();
+
+            if (createError) throw createError;
+            account = newAccount;
+            console.log(`[SERVER] Created new account for ${payload.Username} with ID: ${account.id}`);
+        } else if (fetchError) {
+            throw fetchError;
+        }
+
+        // 2. Map items and explicitly attach the dynamic user_id
         const rowsToInsert = payload.Items.map(item => ({
+            user_id: account.id, // Linked to accounts table
             session_id: payload.Session,
-            rolled_at: payload.Timestamp, // Inherit timestamp from client roll execution
+            rolled_at: payload.Timestamp,
             pull_number: item.PullNumber,
             item_name: item.Name,
             rarity: item.Rarity
         }));
 
-        // 4. Perform a fast single-transaction bulk insert into Supabase
-        const { data, error } = await supabase
+        // 3. Bulk insert to Supabase
+        const { error: dbError } = await supabase
             .from('gacha_history')
-            .insert(rowsToInsert); // Pass the array directly for bulk processing
+            .insert(rowsToInsert);
 
-        if (error) {
-            console.error('Supabase DB error:', error.message);
+        if (dbError) {
+            console.error('Supabase DB error:', dbError.message);
             return res.status(500).json({ error: 'Failed to log results to database.' });
         }
 
-        console.log(`Successfully logged ${rowsToInsert.length} pulls to Supabase!`);
-
         return res.status(200).json({
-            message: "Gacha results successfully logged to database!",
-            session_id: payload.SessionId
+            message: `Gacha results successfully logged for ${payload.Username}!`,
+            userId: account.id
         });
 
     } catch (err) {
@@ -59,11 +69,9 @@ app.post('/api/gacha/results', async (req, res) => {
         return res.status(500).json({ error: 'Internal server error.' });
     }
 });
+
 const PORT = process.env.PORT || 5000;
-
-const HOST = '0.0.0.0'; 
-
-// 3. Update your app.listen call to include the HOST variable
+const HOST = '0.0.0.0';
 app.listen(PORT, HOST, () => {
-    console.log(`✅ Success! Gacha Backend running on http://${HOST}:${PORT}`);
+    console.log(`Gacha Backend running on http://${HOST}:${PORT}`);
 });
