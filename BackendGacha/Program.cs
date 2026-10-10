@@ -29,8 +29,7 @@ namespace GachaSystem
             var builder = WebApplication.CreateBuilder(args);
             var app = builder.Build();
 
-            string jsBackendUrl = Environment.GetEnvironmentVariable("GACHA_BACKEND_URL") 
-                                  ?? "https://pack-simulator.onrender.com";
+            string jsBackendUrl = "https://pack-simulator.onrender.com";
 
             // 2. Define your endpoint route cleanly
             app.MapPost("/api/gacha/pull", async ([FromBody] UserPullRequest request) =>
